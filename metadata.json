@@ -1,0 +1,5 @@
+{
+  "name": "CineQuest Movie Explorer",
+  "description": "An immersive, cinematic movie discovery platform powered by TMDB API with advanced filtering and real-time search.",
+  "requestFramePermissions": []
+}
