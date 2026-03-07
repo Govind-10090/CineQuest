@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { tmdbService, getImageUrl } from '../services/tmdb';
-import { motion } from 'motion/react';
-import { Star, Clock, Calendar, ArrowLeft, Play, Plus, Share2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Star, Clock, Calendar, ArrowLeft, Play, Bookmark, BookmarkCheck, Share2, X, ExternalLink } from 'lucide-react';
+import { useWatchlist } from '../context/WatchlistContext';
 
 export const MovieDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showTrailer, setShowTrailer] = useState(false);
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -33,6 +36,42 @@ export const MovieDetails = () => {
 
   if (!movie) return <div>Movie not found</div>;
 
+  const isBookmarked = isInWatchlist(movie.id);
+  const trailer = movie.videos?.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+  
+  // Get watch providers (streaming, rent, or buy)
+  const watchData = movie['watch/providers']?.results;
+  const regionData = watchData?.IN || watchData?.US || Object.values(watchData || {})[0] as any;
+  const providers = regionData?.flatrate || regionData?.rent || regionData?.buy || [];
+  const watchLink = regionData?.link;
+
+  const handleWatchlist = () => {
+    if (isBookmarked) {
+      removeFromWatchlist(movie.id);
+    } else {
+      addToWatchlist(movie);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: movie.title,
+      text: movie.overview,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-brand-bg">
       {/* Backdrop */}
@@ -52,7 +91,7 @@ export const MovieDetails = () => {
           className="flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-12 group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          Back to Discover
+          Back
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
@@ -108,9 +147,11 @@ export const MovieDetails = () => {
                 ))}
               </div>
 
-              <p className="text-xl text-white/70 leading-relaxed mb-12 max-w-3xl font-light italic">
-                "{movie.tagline}"
-              </p>
+              {movie.tagline && (
+                <p className="text-xl text-white/70 leading-relaxed mb-12 max-w-3xl font-light italic">
+                  "{movie.tagline}"
+                </p>
+              )}
 
               <div className="mb-12">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">Overview</h3>
@@ -119,15 +160,62 @@ export const MovieDetails = () => {
                 </p>
               </div>
 
+              {/* OTT Availability */}
+              {providers.length > 0 && (
+                <div className="mb-12">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4">Available on</h3>
+                  <div className="flex flex-wrap gap-4">
+                    {providers.map((provider: any) => (
+                      <a 
+                        key={provider.provider_id} 
+                        href={watchLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="group relative"
+                      >
+                        <img 
+                          src={getImageUrl(provider.logo_path)} 
+                          alt={provider.provider_name}
+                          className="w-12 h-12 rounded-xl border border-white/10 group-hover:scale-110 transition-transform"
+                          title={provider.provider_name}
+                        />
+                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                          {provider.provider_name}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-4">
-                <button className="bg-brand-accent text-white px-10 py-4 rounded-full font-bold flex items-center gap-2 hover:brightness-110 transition-all transform hover:scale-105">
-                  <Play size={20} fill="currentColor" />
-                  Watch Trailer
+                {trailer ? (
+                  <button 
+                    onClick={() => setShowTrailer(true)}
+                    className="bg-brand-accent text-white px-10 py-4 rounded-full font-bold flex items-center gap-2 hover:brightness-110 transition-all transform hover:scale-105"
+                  >
+                    <Play size={20} fill="currentColor" />
+                    Watch Trailer
+                  </button>
+                ) : (
+                  <button 
+                    disabled
+                    className="bg-white/10 text-white/40 px-10 py-4 rounded-full font-bold flex items-center gap-2 cursor-not-allowed"
+                  >
+                    <Play size={20} />
+                    No Trailer Available
+                  </button>
+                )}
+                <button 
+                  onClick={handleWatchlist}
+                  className={`p-4 rounded-full transition-all transform hover:scale-105 ${isBookmarked ? 'bg-brand-accent text-white' : 'glass hover:bg-white/10'}`}
+                >
+                  {isBookmarked ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
                 </button>
-                <button className="glass p-4 rounded-full hover:bg-white/10 transition-all">
-                  <Plus size={20} />
-                </button>
-                <button className="glass p-4 rounded-full hover:bg-white/10 transition-all">
+                <button 
+                  onClick={handleShare}
+                  className="glass p-4 rounded-full hover:bg-white/10 transition-all transform hover:scale-105"
+                >
                   <Share2 size={20} />
                 </button>
               </div>
@@ -155,6 +243,34 @@ export const MovieDetails = () => {
           </div>
         </section>
       </div>
+
+      {/* Trailer Modal */}
+      <AnimatePresence>
+        {showTrailer && trailer && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 md:p-20"
+          >
+            <button 
+              onClick={() => setShowTrailer(false)}
+              className="absolute top-8 right-8 text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+            >
+              <X size={32} />
+            </button>
+            <div className="w-full max-w-6xl aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
+                title="Movie Trailer"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

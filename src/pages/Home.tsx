@@ -3,16 +3,19 @@ import { Link } from 'react-router-dom';
 import { tmdbService, Movie, getImageUrl } from '../services/tmdb';
 import { MovieCard } from '../components/MovieCard';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Info, ChevronRight, TrendingUp, ChevronLeft, Loader2 } from 'lucide-react';
+import { Play, Info, ChevronRight, TrendingUp, ChevronLeft, Loader2, Bookmark, BookmarkCheck, X } from 'lucide-react';
+import { useWatchlist } from '../context/WatchlistContext';
 
 export const Home = () => {
   const [trending, setTrending] = useState<Movie[]>([]);
-  const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
+  const [featuredMovies, setFeaturedMovies] = useState<any[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   
   const observer = useRef<IntersectionObserver | null>(null);
   const lastMovieElementRef = useCallback((node: HTMLDivElement | null) => {
@@ -31,7 +34,14 @@ export const Home = () => {
       try {
         const data = await tmdbService.getTrending(1);
         setTrending(data.results);
-        setFeaturedMovies(data.results.slice(0, 5));
+        
+        // Fetch full details (including videos) for the top 5 featured movies
+        const featuredPromises = data.results.slice(0, 5).map((m: Movie) => 
+          tmdbService.getMovieDetails(m.id)
+        );
+        const featuredWithDetails = await Promise.all(featuredPromises);
+        setFeaturedMovies(featuredWithDetails);
+        
         setHasMore(data.page < data.total_pages && data.results.length < 200);
       } catch (error) {
         console.error('Error fetching movies:', error);
@@ -134,15 +144,55 @@ export const Home = () => {
                   <p className="text-lg text-white/70 mb-8 line-clamp-3 max-w-2xl leading-relaxed">
                     {currentFeatured.overview}
                   </p>
+
+                  {/* OTT Providers in Hero */}
+                  {currentFeatured['watch/providers']?.results && (
+                    <div className="flex flex-wrap gap-3 mb-10">
+                      {(() => {
+                        const watchData = currentFeatured['watch/providers'].results;
+                        const regionData = watchData?.IN || watchData?.US || Object.values(watchData || {})[0] as any;
+                        const providers = regionData?.flatrate || regionData?.rent || regionData?.buy || [];
+                        return providers.slice(0, 4).map((provider: any) => (
+                          <div key={provider.provider_id} className="group relative">
+                            <img 
+                              src={getImageUrl(provider.logo_path)} 
+                              alt={provider.provider_name}
+                              className="w-10 h-10 rounded-xl border border-white/10 group-hover:scale-110 transition-transform"
+                            />
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-4">
-                    <button className="bg-white text-black px-8 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-brand-accent hover:text-white transition-all transform hover:scale-105">
-                      <Play size={20} fill="currentColor" />
-                      Watch Trailer
+                    {currentFeatured.videos?.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube') ? (
+                      <button 
+                        onClick={() => setShowTrailer(true)}
+                        className="bg-white text-black px-8 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-brand-accent hover:text-white transition-all transform hover:scale-105"
+                      >
+                        <Play size={20} fill="currentColor" />
+                        Watch Trailer
+                      </button>
+                    ) : (
+                      <button 
+                        disabled
+                        className="bg-white/10 text-white/40 px-8 py-4 rounded-full font-bold flex items-center gap-2 cursor-not-allowed"
+                      >
+                        <Play size={20} />
+                        No Trailer
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => isInWatchlist(currentFeatured.id) ? removeFromWatchlist(currentFeatured.id) : addToWatchlist(currentFeatured)}
+                      className={`glass px-8 py-4 rounded-full font-bold flex items-center gap-2 transition-all transform hover:scale-105 ${isInWatchlist(currentFeatured.id) ? 'bg-brand-accent text-white' : 'hover:bg-white/10'}`}
+                    >
+                      {isInWatchlist(currentFeatured.id) ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
+                      {isInWatchlist(currentFeatured.id) ? 'Saved' : 'Watchlist'}
                     </button>
-                    <button className="glass px-8 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-white/10 transition-all">
+                    <Link to={`/movie/${currentFeatured.id}`} className="glass p-4 rounded-full hover:bg-white/10 transition-all">
                       <Info size={20} />
-                      More Info
-                    </button>
+                    </Link>
                   </div>
                 </motion.div>
               </div>
@@ -259,6 +309,34 @@ export const Home = () => {
           Limit of 200 trending movies reached.
         </div>
       )}
+
+      {/* Trailer Modal */}
+      <AnimatePresence>
+        {showTrailer && currentFeatured && currentFeatured.videos?.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube') && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-4 md:p-20"
+          >
+            <button 
+              onClick={() => setShowTrailer(false)}
+              className="absolute top-8 right-8 text-white/60 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
+            >
+              <X size={32} />
+            </button>
+            <div className="w-full max-w-6xl aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+              <iframe
+                src={`https://www.youtube.com/embed/${currentFeatured.videos.results.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube').key}?autoplay=1`}
+                title="Movie Trailer"
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

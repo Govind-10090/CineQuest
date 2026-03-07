@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { tmdbService, Movie, Genre } from '../services/tmdb';
 import { MovieCard } from '../components/MovieCard';
-import { Loader2, Compass, Filter } from 'lucide-react';
+import { Loader2, Compass } from 'lucide-react';
 
 export const Discover = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -102,7 +102,6 @@ export const Discover = () => {
 
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2 glass px-4 py-2 rounded-full">
-            <Filter size={16} className="text-white/40" />
             <select 
               className="bg-transparent text-sm focus:outline-none cursor-pointer"
               value={selectedGenre}

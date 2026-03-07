@@ -11,7 +11,7 @@ const tmdb = axios.create({
   },
 });
 
-export const getImageUrl = (path: string | null, size: 'w500' | 'original' = 'w500') => {
+export const getImageUrl = (path: string | null, size: 'w92' | 'w500' | 'original' = 'w500') => {
   if (!path) return 'https://picsum.photos/seed/movie/500/750';
   return `${IMAGE_BASE_URL}/${size}${path}`;
 };
@@ -42,7 +42,11 @@ export const tmdbService = {
     return response.data;
   },
   getMovieDetails: async (id: number) => {
-    const response = await tmdb.get(`/movie/${id}`, { params: { append_to_response: 'videos,credits' } });
+    const response = await tmdb.get(`/movie/${id}`, { 
+      params: { 
+        append_to_response: 'videos,credits,watch/providers' 
+      } 
+    });
     return response.data;
   },
   getGenres: async () => {
@@ -56,5 +60,9 @@ export const tmdbService = {
   getTopRated: async (page = 1) => {
     const response = await tmdb.get('/movie/top_rated', { params: { page } });
     return response.data;
+  },
+  getWatchProviders: async (id: number) => {
+    const response = await tmdb.get(`/movie/${id}/watch/providers`);
+    return response.data.results;
   },
 };

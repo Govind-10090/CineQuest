@@ -1,10 +1,12 @@
-import { Search, Film, TrendingUp, Filter } from 'lucide-react';
+import { Search, Film, TrendingUp, Bookmark } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
+import { useWatchlist } from '../context/WatchlistContext';
 
 export const Navbar = () => {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
+  const { watchlist } = useWatchlist();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,14 @@ export const Navbar = () => {
         <Link to="/discover" className="hover:text-brand-accent transition-colors">Discover</Link>
         <Link to="/trending" className="hover:text-brand-accent transition-colors">Trending</Link>
         <Link to="/genres" className="hover:text-brand-accent transition-colors">Genres</Link>
+        <Link to="/watchlist" className="hover:text-brand-accent transition-colors flex items-center gap-2">
+          Watchlist
+          {watchlist.length > 0 && (
+            <span className="bg-brand-accent text-white text-[10px] px-1.5 py-0.5 rounded-full">
+              {watchlist.length}
+            </span>
+          )}
+        </Link>
       </div>
 
       <div className="flex items-center gap-4">
@@ -39,9 +49,14 @@ export const Navbar = () => {
             className="bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 w-64 focus:outline-none focus:border-brand-accent/50 transition-all text-sm"
           />
         </form>
-        <button className="p-2 hover:bg-white/5 rounded-full transition-colors">
-          <Filter size={20} className="text-white/60" />
-        </button>
+        <Link to="/watchlist" className="p-2 hover:bg-white/5 rounded-full transition-colors relative md:hidden">
+          <Bookmark size={20} className="text-white/60" />
+          {watchlist.length > 0 && (
+            <span className="absolute top-0 right-0 bg-brand-accent text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full">
+              {watchlist.length}
+            </span>
+          )}
+        </Link>
       </div>
     </nav>
   );
