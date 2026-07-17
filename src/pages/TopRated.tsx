@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { tmdbService, Movie } from '../services/tmdb';
+import { omdbService, Movie } from '../services/omdb';
 import { MovieCard } from '../components/MovieCard';
 import { Loader2, Star } from 'lucide-react';
 
@@ -25,7 +25,7 @@ export const TopRated = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const data = await tmdbService.getTopRated(1);
+        const data = await omdbService.getTopRated(1);
         setMovies(data.results);
         setHasMore(data.page < data.total_pages && data.results.length < 200);
       } catch (error) {
@@ -43,7 +43,7 @@ export const TopRated = () => {
     const fetchMoreData = async () => {
       setLoadingMore(true);
       try {
-        const data = await tmdbService.getTopRated(page);
+        const data = await omdbService.getTopRated(page);
         setMovies(prev => {
           const newMovies = [...prev, ...data.results];
           if (newMovies.length >= 200) {

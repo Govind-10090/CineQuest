@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { tmdbService, Movie } from '../services/tmdb';
+import { omdbService, Movie } from '../services/omdb';
 import { MovieCard } from '../components/MovieCard';
 import { Search as SearchIcon } from 'lucide-react';
 
@@ -15,7 +15,7 @@ export const Search = () => {
       if (!query) return;
       setLoading(true);
       try {
-        const data = await tmdbService.searchMovies(query);
+        const data = await omdbService.searchMovies(query);
         setMovies(data.results);
       } catch (error) {
         console.error('Search error:', error);

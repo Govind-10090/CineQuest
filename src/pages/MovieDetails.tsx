@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { tmdbService, getImageUrl } from '../services/tmdb';
+import { omdbService, getImageUrl } from '../services/omdb';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, Clock, Calendar, ArrowLeft, Play, Bookmark, BookmarkCheck, Share2, X, ExternalLink } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
@@ -17,7 +17,7 @@ export const MovieDetails = () => {
     const fetchDetails = async () => {
       if (!id) return;
       try {
-        const data = await tmdbService.getMovieDetails(parseInt(id));
+        const data = await omdbService.getMovieDetails(id);
         setMovie(data);
       } catch (error) {
         console.error('Error fetching movie details:', error);

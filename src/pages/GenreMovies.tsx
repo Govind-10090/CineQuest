@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { tmdbService, Movie } from '../services/tmdb';
+import { omdbService, Movie } from '../services/omdb';
 import { MovieCard } from '../components/MovieCard';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +33,7 @@ export const GenreMovies = () => {
     const fetchInitialData = async () => {
       if (!id) return;
       try {
-        const data = await tmdbService.discoverMovies({ with_genres: id, page: 1 });
+        const data = await omdbService.discoverMovies({ with_genres: id, page: 1 });
         setMovies(data.results);
         setHasMore(data.page < data.total_pages && data.results.length < 200);
       } catch (error) {
@@ -51,7 +51,7 @@ export const GenreMovies = () => {
     const fetchMoreData = async () => {
       setLoadingMore(true);
       try {
-        const data = await tmdbService.discoverMovies({ with_genres: id, page });
+        const data = await omdbService.discoverMovies({ with_genres: id, page });
         setMovies(prev => {
           const newMovies = [...prev, ...data.results];
           if (newMovies.length >= 200) {

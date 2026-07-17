@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { tmdbService, Movie, Genre } from '../services/tmdb';
+import { omdbService, Movie, Genre } from '../services/omdb';
 import { MovieCard } from '../components/MovieCard';
 import { Loader2, Compass } from 'lucide-react';
 
@@ -28,7 +28,7 @@ export const Discover = () => {
   useEffect(() => {
     const fetchGenres = async () => {
       try {
-        const data = await tmdbService.getGenres();
+        const data = await omdbService.getGenres();
         setGenres(data);
       } catch (error) {
         console.error('Error fetching genres:', error);
@@ -42,7 +42,7 @@ export const Discover = () => {
       setLoading(true);
       setPage(1);
       try {
-        const data = await tmdbService.discoverMovies({ 
+        const data = await omdbService.discoverMovies({ 
           with_genres: selectedGenre, 
           'vote_average.gte': minRating,
           page: 1 
@@ -64,7 +64,7 @@ export const Discover = () => {
     const fetchMoreData = async () => {
       setLoadingMore(true);
       try {
-        const data = await tmdbService.discoverMovies({ 
+        const data = await omdbService.discoverMovies({ 
           with_genres: selectedGenre, 
           'vote_average.gte': minRating,
           page 

@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Movie } from '../services/tmdb';
+import { Movie } from '../services/omdb';
 
 interface WatchlistContextType {
   watchlist: Movie[];
   addToWatchlist: (movie: Movie) => void;
-  removeFromWatchlist: (movieId: number) => void;
-  isInWatchlist: (movieId: number) => boolean;
+  removeFromWatchlist: (movieId: string) => void;
+  isInWatchlist: (movieId: string) => boolean;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -27,11 +27,11 @@ export const WatchlistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   };
 
-  const removeFromWatchlist = (movieId: number) => {
+  const removeFromWatchlist = (movieId: string) => {
     setWatchlist((prev) => prev.filter((m) => m.id !== movieId));
   };
 
-  const isInWatchlist = (movieId: number) => {
+  const isInWatchlist = (movieId: string) => {
     return watchlist.some((m) => m.id === movieId);
   };
 

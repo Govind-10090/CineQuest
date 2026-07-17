@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { tmdbService, Genre } from '../services/tmdb';
+import { omdbService, Genre } from '../services/omdb';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Layers } from 'lucide-react';
@@ -11,7 +11,7 @@ export const Genres = () => {
   useEffect(() => {
     const fetchGenres = async () => {
       try {
-        const data = await tmdbService.getGenres();
+        const data = await omdbService.getGenres();
         setGenres(data);
       } catch (error) {
         console.error('Error fetching genres:', error);

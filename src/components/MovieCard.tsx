@@ -2,7 +2,7 @@ import { Star, Play, Bookmark, BookmarkCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import { Movie, getImageUrl, tmdbService } from '../services/tmdb';
+import { Movie, getImageUrl, omdbService } from '../services/omdb';
 import { useWatchlist } from '../context/WatchlistContext';
 
 interface MovieCardProps {
@@ -19,7 +19,7 @@ export const MovieCard = ({ movie }: MovieCardProps) => {
   const fetchProviders = async (e?: React.MouseEvent) => {
     if (hasFetched) return;
     try {
-      const results = await tmdbService.getWatchProviders(movie.id);
+      const results = await omdbService.getWatchProviders(movie.id);
       const regionData = results?.IN || results?.US || Object.values(results || {})[0] as any;
       const flatrate = regionData?.flatrate || regionData?.rent || regionData?.buy || [];
       setProviders(flatrate.slice(0, 3));

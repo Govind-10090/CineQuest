@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { tmdbService, Movie, getImageUrl } from '../services/tmdb';
+import { omdbService, Movie, getImageUrl } from '../services/omdb';
 import { MovieCard } from '../components/MovieCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, Info, ChevronRight, TrendingUp, ChevronLeft, Loader2, Bookmark, BookmarkCheck, X } from 'lucide-react';
@@ -32,12 +32,12 @@ export const Home = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const data = await tmdbService.getTrending(1);
+        const data = await omdbService.getTrending(1);
         setTrending(data.results);
         
         // Fetch full details (including videos) for the top 5 featured movies
         const featuredPromises = data.results.slice(0, 5).map((m: Movie) => 
-          tmdbService.getMovieDetails(m.id)
+          omdbService.getMovieDetails(m.id)
         );
         const featuredWithDetails = await Promise.all(featuredPromises);
         setFeaturedMovies(featuredWithDetails);
@@ -58,7 +58,7 @@ export const Home = () => {
     const fetchMoreData = async () => {
       setLoadingMore(true);
       try {
-        const data = await tmdbService.getTrending(page);
+        const data = await omdbService.getTrending(page);
         setTrending(prev => {
           const newTrending = [...prev, ...data.results];
           if (newTrending.length >= 200) {
